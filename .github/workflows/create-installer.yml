@@ -1,0 +1,48 @@
+name: Create Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      is_latest:
+        description: 'Should we pull from the latest non-prerelease?'
+        required: true
+        default: 'true'
+        type: 'choice'
+        options:
+          - 'true'
+          - 'false'
+      tag_value:
+        description: 'The tag to build an installer with if latest is set to false. Include the "v" prefix'
+        required: false
+
+jobs:
+  build-installer:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: robinraju/release-downloader@v1
+      name: Download the Release
+      with:
+        repository: "PCSX2/pcsx2"
+        latest: ${{github.event.inputs.is_latest}}
+        tag: ${{github.event.inputs.tag_value}}
+        fileName: 'pcsx2-v*-windows-x64-Qt.7z'
+
+    - name: Extract the Release
+      run: |
+        "C:\Program Files\7-Zip\7z.exe" x pcsx2-v*-windows-x64-Qt.7z .\main
+
+    - uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      with:
+        path: 'PCSX2 Installer.iss'
+
+#    - name: Create Release
+ #     uses: "marvinpinto/action-automatic-releases@latest"
+  #    with:
+   #     repo_token: "${{ secrets.GITHUB_TOKEN }}"
+    #    automatic_release_tag: "latest-windows-installer"
+     #   prerelease: false
+     #   title: "Latest Installer Build"
+     #   files: |
+     #     pcsx2-windows-dependencies.7z
